@@ -3,7 +3,7 @@ A simple Python-server which wraps around Vampire and can be used as backend for
 
 # Setup
 ## Step 1 - Install Vampire
-### Alternative 2: 
+### Alternative 1: 
 Download the Vampire source and build it yourself:
 ```
 git clone https://github.com/vprover/vampire
