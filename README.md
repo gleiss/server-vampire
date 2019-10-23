@@ -15,13 +15,10 @@ make vampire_rel
 Get a (reasonably-recent) Vampire binary from https://github.com/vprover/vampire/releases
 
 
-## Step 2 - Install the Vampire server
-Download the Vampire-server and install it using pip3:
-
+## Step 2 - Download Vampire server
 ```
 git clone https://github.com/gleiss/server-vampire
 cd server-vampire
-pip3 install -r requirements.txt
 ```
 
 # Running the server
