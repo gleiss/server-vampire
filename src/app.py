@@ -6,9 +6,6 @@ if sys.version_info.major < 3:
 
 import json
 
-from flask import Flask, request
-from flask_cors import CORS
-
 from model.parsing import parse
 from model.vampire import VampireWrapper
 
@@ -16,9 +13,7 @@ import tempfile
 
 import argparse
 
-app = Flask(__name__)
-app.config.from_object(__name__)
-CORS(app)
+from bottle import route, post, run, request, response
 
 parser = argparse.ArgumentParser(description='Run Vampire Server')
 parser.add_argument("-vampire", "--vampire", required=True, action="store", dest="vampirePath", help="path to vampire-executable")
@@ -27,8 +22,8 @@ args = parser.parse_args()
 vampireWrapper = VampireWrapper(args.vampirePath)
 
 def startVampire(manualCS):
-    request_params = request.get_json()
-    fileContent = request_params.get('file', '')
+    data = request.json
+    fileContent = data['file']
     if fileContent == "":
         message = "User error: Input encoding must not be empty!"
         print(message)
@@ -36,7 +31,7 @@ def startVampire(manualCS):
             "status" : "error",
             "message" : message
         })
-    vampireUserOptions = request_params.get("vampireUserOptions", "")
+    vampireUserOptions = data["vampireUserOptions"]
 
     temporaryFile = tempfile.NamedTemporaryFile()
     temporaryFile.write(str.encode(fileContent))
@@ -71,25 +66,53 @@ def startVampire(manualCS):
             'lines' : [line.to_json() for line in lines]
         })
 
-@app.route('/vampire/start', methods=['POST'])
-def handle_startVampire():  
+def allow_cors(func):
+    """ this is a decorator which enable CORS for specified endpoint """
+    def wrapper(*args, **kwargs):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, DELETE, PUT, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+        return func(*args, **kwargs)
+
+    return wrapper
+
+@route('/vampire/start', method='OPTIONS')
+@allow_cors
+def handle_cors_start():
+    return {}
+
+@route('/vampire/startmanualcs', method='OPTIONS')
+@allow_cors
+def handle_cors_startmanualcs():
+    return {}
+
+@route('/vampire/select', method='OPTIONS')
+@allow_cors
+def handle_cors_select():
+    return {}
+
+@post('/vampire/start')
+@allow_cors
+def handle_startVampire():
     return startVampire(False)
 
-@app.route('/vampire/startmanualcs', methods=['POST'])
+@post('/vampire/startmanualcs')
+@allow_cors
 def handle_startVampireManualCS():
     return startVampire(True)
 
-@app.route('/vampire/select', methods=['POST'])
+@post('/vampire/select')
+@allow_cors
 def handle_selection():    
-    request_params = request.get_json()
-    selectedId = int(request_params.get('id', ''))
+    data = request.json
+    selectedId = int(data['id'])
 
     if(vampireWrapper.vampireState != "running"):
         message = "User error: Vampire is not running, so it makes no sense to perform selection!"
         print(message)
         return json.dumps({
             'status' : "error",
-            "message" : message,
+            "message" : message,    
             'vampireState' : vampireWrapper.vampireState
         })
     # TODO: check that selectedId was accepted by Vampire
@@ -103,4 +126,4 @@ def handle_selection():
     })  
 
 if __name__ == '__main__':
-    app.run()
+    run(host='localhost', port=5000, debug=True)
