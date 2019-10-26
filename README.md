@@ -23,3 +23,10 @@ python3 ./src/app.py --vampire path/to/vampire/executable
 ```
 
 The running server will answer requests at port http://127.0.0.1:5000/
+
+# Docker
+Alternatively, both Vampire and the Vampire server can be installed and run using Docker:
+```
+docker pull bgleiss/server-vampire
+docker run -p 5000:5000 bgleiss/server-vampire
+```
