@@ -18,9 +18,11 @@ from bottle import route, post, run, request, response
 
 parser = argparse.ArgumentParser(description='Run Vampire Server')
 parser.add_argument("-vampire", "--vampire", required=True, action="store", dest="vampirePath", help="path to vampire-executable")
+parser.add_argument("--verbose", action="store_true", help="use verbose logging")
 args = parser.parse_args()
 
 vampireWrapper = VampireWrapper(args.vampirePath)
+
 
 def startVampire(manualCS):
     data = request.json
@@ -33,15 +35,16 @@ def startVampire(manualCS):
             "message" : message
         })
     vampireUserOptions = data["vampireUserOptions"]
-
+    if args.verbose:
+        print("Vampire user options are: " + str(vampireUserOptions))
     temporaryFile = tempfile.NamedTemporaryFile()
     temporaryFile.write(str.encode(fileContent))
     temporaryFile.flush() # commit file buffer to disk so that Vampire can access it
 
     if manualCS:
-        output = vampireWrapper.startManualCS(temporaryFile.name, vampireUserOptions)
+        output = vampireWrapper.startManualCS(temporaryFile.name, vampireUserOptions, args.verbose)
     else:
-        output = vampireWrapper.start(temporaryFile.name, vampireUserOptions)
+        output = vampireWrapper.start(temporaryFile.name, vampireUserOptions, args.verbose)
 
     if vampireWrapper.vampireState == "error":
         message = "User error: Wrong options for Vampire or mistake in encoding"
@@ -51,9 +54,13 @@ def startVampire(manualCS):
             "message" : message
         })
 
+    if args.verbose:
+        print("Now parsing output from Vampire")
     lines = parse(output)
     temporaryFile.close()
 
+    if args.verbose:
+        print("Finishing with status success, Vampire is in state " + str(vampireWrapper.vampireState) + ", will return " + str(len(lines)) + " lines." )
     if manualCS:
         return json.dumps({
             'status' : "success",
@@ -95,18 +102,27 @@ def handle_cors_select():
 @post('/vampire/start')
 @allow_cors
 def handle_startVampire():
+    if args.verbose:
+        print("Entering handle_startVampire.")
     return startVampire(False)
 
 @post('/vampire/startmanualcs')
 @allow_cors
 def handle_startVampireManualCS():
+    if args.verbose:
+        print("Entering handle_startVampireManualCS.")
     return startVampire(True)
 
 @post('/vampire/select')
 @allow_cors
 def handle_selection():    
+    if args.verbose:
+        print("Entering handle_selection.")
+
     data = request.json
     selectedId = int(data['id'])
+    if args.verbose:
+        print("Selected id is " + str(selectedId))
 
     if(vampireWrapper.vampireState != "running"):
         message = "User error: Vampire is not running, so it makes no sense to perform selection!"
@@ -117,9 +133,14 @@ def handle_selection():
             'vampireState' : vampireWrapper.vampireState
         })
     # TODO: check that selectedId was accepted by Vampire
-    output = vampireWrapper.select(selectedId)
+    output = vampireWrapper.select(selectedId, args.verbose)
+
+    if args.verbose:
+        print("Now parsing output from Vampire")
     lines = parse(output)
 
+    if args.verbose:
+        print("Finishing with status success, Vampire is in state " + str(vampireWrapper.vampireState) + ", will return " + str(len(lines)) + " lines." )
     return json.dumps({
         "status" : "success",
         'vampireState' : vampireWrapper.vampireState, 
