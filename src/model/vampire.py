@@ -22,7 +22,7 @@ class VampireWrapper:
 		args.extend(self.optionsForVisualization)
 		args.append(inputFile)
 
-		output = run(args, stdout=PIPE, stderr=STDOUT, text=True).stdout
+		output = run(args, stdout=PIPE, stderr=STDOUT, universal_newlines=True).stdout
 
 		lines = output.replace('\r\n', '\n').replace('\r', '\n').split('\n')
 		state = "none"
