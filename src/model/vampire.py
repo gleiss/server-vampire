@@ -38,7 +38,10 @@ class VampireWrapper:
 			if line.startswith("% Refutation found. Thanks to"): # TODO: use SZS status instead?
 				state = "refutation"
 				break
-			elif line.startswith("% SZS status Satisfiable"):
+			# Note:
+			# Vampire reports Satisfiable, if it saturates on a problem without conjecture
+			# Vampire reports CounterSatisfiable, if it saturates on a problem with conjecture
+			elif line.startswith("% SZS status Satisfiable") or line.startswith("% SZS status CounterSatisfiable"):
 				state = "saturation"
 				break
 			elif line.startswith("User error: "):
