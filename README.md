@@ -1,3 +1,5 @@
+# This repository is DEPRECATED/UNMAINTAINED
+
 # server-vampire
 A simple Python-server which wraps around Vampire and can be used as backend for the Saturation Visualization of Vampire.
 
